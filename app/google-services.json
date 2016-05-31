@@ -1,0 +1,35 @@
+{
+  "project_info": {
+    "project_number": "1058751606326",
+    "project_id": "d3rumb4"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1058751606326:android:81bf07f689ee0f7a",
+        "android_client_info": {
+          "package_name": "org.ceindetec.d3rumb4"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMe6nVOcBVXZ_WbZWG_4OjB2FBHQKQofY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

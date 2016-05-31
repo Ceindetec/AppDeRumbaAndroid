@@ -1,0 +1,78 @@
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:weightSum="100">
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="10"
+                android:orientation="horizontal"
+                android:background="#6755b2">
+
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:id="@+id/img_perfil"
+                    android:layout_weight="5"
+                    android:layout_gravity="left"
+                    android:layout_margin="5dp" />
+
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:id="@+id/tvBienvenida"
+                    android:layout_weight="5" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ingresa el código de tu rumba:"
+                android:id="@+id/tvLocation"
+                android:layout_weight="5" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_weight="5">
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/et_codigo_rumba"
+                        android:layout_weight="5" />
+                    <Button
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Acceder"
+                        android:id="@+id/btn_acceder"
+                        android:layout_gravity="center_vertical"
+                        android:focusableInTouchMode="false" />
+
+
+                </LinearLayout>
+
+                <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+
+                    xmlns:tools="http://schemas.android.com/tools"
+                    android:id="@+id/map"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="384dp"
+                    android:layout_height="0dp"
+                    tools:context=".MainLogin"
+                    android:layout_weight="80" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/tvCantDrumbas"
+                    android:background="#6755b2"
+                    android:textAlignment="center"
+                    android:layout_weight="10" />
+
+</LinearLayout>
