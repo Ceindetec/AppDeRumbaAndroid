@@ -30,7 +30,7 @@ package="org.ceindetec.d3rumb4">
     -->
     <meta-data
         android:name="com.google.android.geo.API_KEY"
-        android:value="AIzaSyBlLtwAE_gswcVprUS3BxRF-EpJmJR-j8c"/>
+        android:value="AIzaSyA4Pq8H2vqOMCSyvUj_MjoodztUY1PcXCI"/>
 
     <meta-data
         android:name="com.facebook.sdk.ApplicationId"

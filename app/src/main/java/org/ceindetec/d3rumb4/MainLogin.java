@@ -69,9 +69,9 @@ public class MainLogin extends FragmentActivity implements LocationListener,
     Location ubicacion_actual;
     String bienvenida = "";
     //String URL_BASE = "http://192.168.0.17/derumba/";
-    String URL_BASE = "http://192.168.0.21/derumba/";
+    //String URL_BASE = "http://192.168.0.21/derumba/";
     //String URL_BASE = "http://192.168.1.3/derumba/";
-
+    String URL_BASE = GlobalVars.getGlobalVarsInstance().getUrlBase();
 
     String nickname = "";
     int sedeId;
@@ -81,6 +81,11 @@ public class MainLogin extends FragmentActivity implements LocationListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_login);
 
+        //GlobalVars.getGlobalVarsInstance().setUrlBase("http://192.168.0.21/derumba/");
+        //GlobalVars.getGlobalVarsInstance().setUrlBase("http://192.168.0.41/derumba/");
+
+
+        GlobalVars.getGlobalVarsInstance().setEstadoRegistroUsuario(0);
 
         /** RECUPERA DATOS DE FACEBOOK LOGIN Y LOS ASIGNA A LA ACTIVIDAD ********************************************************/
 
@@ -266,6 +271,8 @@ public class MainLogin extends FragmentActivity implements LocationListener,
 
                                     if (addresses.size() > 0 && addresses != null) {
                                         ciudadactual = addresses.get(0).getLocality();
+                                        if (ciudadactual == null)
+                                            ciudadactual = "Villavicencio";
                                         if (ciudadactual.equals(ciudad)) {
                                             agregarMarcador(latitud, longitud, nombre, sede);
                                             conteo++;
@@ -320,6 +327,7 @@ public class MainLogin extends FragmentActivity implements LocationListener,
                                     String tags = obj.get("tags").toString();
                                     JSONObject valoresDb = new JSONObject(tags);
 
+                                    int codigo = Integer.parseInt(key);
                                     String nombre = "";
                                     String titulo = "";
                                     String artista = "";
@@ -339,7 +347,7 @@ public class MainLogin extends FragmentActivity implements LocationListener,
                                     if (valoresDb.has("album")) {
                                         album = valoresDb.get("album").toString();
                                     }
-                                    manager.insBiblioteca(nombre, titulo, artista, genero, album);
+                                    manager.insBiblioteca(codigo, nombre, titulo, artista, genero, album);
                                 }
                             }
                         } catch (JSONException e) {

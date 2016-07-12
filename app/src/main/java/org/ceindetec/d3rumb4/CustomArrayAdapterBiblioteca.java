@@ -31,7 +31,7 @@ class CustomArrayAdapterBiblioteca extends BaseAdapter implements Filterable {
     ArrayList<CancionBiblioteca> listaFiltrada;
     ValueFilter valueFilter;
     DataBaseManager manager;
-    GlobalVars globalVars = new GlobalVars();
+   // GlobalVars globalVars = new GlobalVars();
 
     public CustomArrayAdapterBiblioteca(Context context, ArrayList<CancionBiblioteca> canciones) {
         this.context = context;
@@ -56,10 +56,10 @@ class CustomArrayAdapterBiblioteca extends BaseAdapter implements Filterable {
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-       /* */
+
         LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
 
-        if (convertView == null) {
+      //  if (convertView == null) {
             convertView = mInflater.inflate(R.layout.items_biblioteca, null);
             TextView textViewNombres = (TextView) convertView.findViewById(R.id.nombre);
             CancionBiblioteca cancion = cancionesBiblioteca.get(position);
@@ -84,26 +84,22 @@ class CustomArrayAdapterBiblioteca extends BaseAdapter implements Filterable {
             });
 
 
-        }
+       // }
         return convertView;
     }
 
     private void registrarCancionBD(CancionBiblioteca cancionTest) {
         DataBaseManager manager = new DataBaseManager(context);
-        String URL_BASE = "http://192.168.0.21/derumba/";
+        //String URL_BASE = "http://192.168.0.21/derumba/";
+        String URL_BASE = GlobalVars.getGlobalVarsInstance().getUrlBase();
         long posicion = manager.getTotalCancionesPlaylist();
 
         HashMap<String, String> parameters = new HashMap<>();
-        parameters.put("sede_id", String.valueOf(globalVars.getSede()));
+        parameters.put("sede_id", String.valueOf(GlobalVars.getGlobalVarsInstance().getSede()));
         parameters.put("codigo", cancionTest.getId());
-        parameters.put("agregado_por", globalVars.getNickname());
+        parameters.put("agregado_por", GlobalVars.getGlobalVarsInstance().getNickname());
         parameters.put("posicion", String.valueOf(posicion +1));
         parameters.put("votos", "1");
-
-       /* final ProgressDialog loadingb;
-        loadingb = new ProgressDialog(context);
-        loadingb.setMessage("Agregando cancioin a la playlist ...");
-        loadingb.show();*/
         String archivoPhp = "insertCancion.php";
 
         GsonRequest jsonObjReq = new GsonRequest( Request.Method.POST, URL_BASE + archivoPhp, JsonObject.class ,parameters,
@@ -144,8 +140,6 @@ class CustomArrayAdapterBiblioteca extends BaseAdapter implements Filterable {
         SingletonDeRumba.getInstance(context).addToRequestQueue(jsonObjReq);
     }
 
-
-
     @Override
     public Filter getFilter() {
         if (valueFilter == null) {
@@ -165,7 +159,7 @@ class CustomArrayAdapterBiblioteca extends BaseAdapter implements Filterable {
                     if ((listaFiltrada.get(i).getNombre().toUpperCase())
                             .contains(constraint.toString().toUpperCase())) {
 
-                        CancionBiblioteca cancion = new CancionBiblioteca(listaFiltrada.get(i).getId(),listaFiltrada.get(i).getNombre());
+                        CancionBiblioteca cancion = new CancionBiblioteca(listaFiltrada.get(i).getNombre(), listaFiltrada.get(i).getId());
 
                         filterList.add(cancion);
                     }

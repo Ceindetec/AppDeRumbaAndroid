@@ -11,16 +11,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DataBaseManager extends SQLiteOpenHelper {
 
     public DataBaseManager(Context context) {
-        super(context, "dbderumba1.sqlite", null, 1);
+        super(context, "baseprueba1.sqlite", null, 1);
 
     }
-
-    public static final String CREATE_BIBLIOTECA = "create table biblioteca (id integer primary key autoincrement, "+
-            "nombre text not null, "+
-            "titulo text, "+
-            "artista text, "+
-            "genero text, "+
-            "album text);";
 
     public static final String CREATE_ESTABLECIMIENTOS = "CREATE TABLE establecimientos (id integer primary key, "+
             "nombre text not null, "+
@@ -39,17 +32,19 @@ public class DataBaseManager extends SQLiteOpenHelper {
             "maxCanciones integer not null, " +
             "FOREIGN KEY(establecimiento_id) REFERENCES establecimientos(id));";
 
+    public static final String CREATE_BIBLIOTECA = "create table biblioteca (codigo integer primary key, "+
+            "nombre text not null, "+
+            "titulo text, "+
+            "artista text, "+
+            "genero text, "+
+            "album text);";
+
     public static final String CREATE_LISTA_ONLINE = "CREATE TABLE lista_online (id integer primary key, "+
-            "sede_id integer not null, "+
-            "biblioteca_id integer not null, "+
-            "nombre_cancion text not null, "+
-            "duracion integer, "+
+            "codigo integer not null, "+
             "agregado_por text not null, "+
-            "votos integer DEFAULT 1, "+
             "posicion integer not null, "+
-            "agregado_en integer not null, "+
-            "FOREIGN KEY(sede_id) REFERENCES sedes(id), " +
-            "FOREIGN KEY(biblioteca_id) REFERENCES biblioteca(id));";
+            "votos integer, "+
+            "FOREIGN KEY(codigo) REFERENCES biblioteca(codigo));";
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -74,10 +69,10 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 DatabaseUtils.sqlEscapeString(horario)+","+estado+","+DatabaseUtils.sqlEscapeString(codigoAcceso)+","+maxCanciones+")");
     }
 
-    public void insBiblioteca(String nombre, String titulo, String artista, String genero, String album)
+    public void insBiblioteca(int codigo, String nombre, String titulo, String artista, String genero, String album)
     {
         SQLiteDatabase database = this.getWritableDatabase();
-        database.execSQL("insert into biblioteca values (null, "
+        database.execSQL("insert into biblioteca values ("+codigo+", "
                 +DatabaseUtils.sqlEscapeString(nombre)+","
                 +DatabaseUtils.sqlEscapeString(titulo)+","
                 +DatabaseUtils.sqlEscapeString(artista)+","
@@ -85,15 +80,14 @@ public class DataBaseManager extends SQLiteOpenHelper {
                 +DatabaseUtils.sqlEscapeString(album)+");");
     }
 
-    public void insPlayListOnline(String sede_id,String biblioteca_id,String nombre_cancion,String duracion,
-                                  String agregado_por,String votos,String posicion, String agregado_en )
+    public void insPlayListOnline(String biblioteca_id, String agregado_por,String votos,String posicion )
     {
         SQLiteDatabase database = this.getWritableDatabase();
         database.execSQL("insert into lista_online values (null,"+
-                DatabaseUtils.sqlEscapeString(sede_id)+","+DatabaseUtils.sqlEscapeString(biblioteca_id)+","+
-                DatabaseUtils.sqlEscapeString(nombre_cancion)+"," + DatabaseUtils.sqlEscapeString(duracion)+","+
-                DatabaseUtils.sqlEscapeString(agregado_por)+"," + DatabaseUtils.sqlEscapeString(votos)+","+
-                DatabaseUtils.sqlEscapeString(posicion)+"," + DatabaseUtils.sqlEscapeString(agregado_en)+")");
+                DatabaseUtils.sqlEscapeString(biblioteca_id)+","+
+                DatabaseUtils.sqlEscapeString(agregado_por)+"," +
+                DatabaseUtils.sqlEscapeString(votos)+","+
+                DatabaseUtils.sqlEscapeString(posicion)+")");
     }
 
     public void truncateTables(){
@@ -102,6 +96,11 @@ public class DataBaseManager extends SQLiteOpenHelper {
         database.execSQL("DELETE FROM sedes;");
         database.execSQL("DELETE FROM establecimientos;");
         database.execSQL("DELETE FROM biblioteca;");
+        database.execSQL("DELETE FROM lista_online;");
+    }
+
+    public void limpiarListaOnline(){
+        SQLiteDatabase database = this.getWritableDatabase();
         database.execSQL("DELETE FROM lista_online;");
     }
 
@@ -115,13 +114,13 @@ public class DataBaseManager extends SQLiteOpenHelper {
 
     public Cursor getPlayList(){
         SQLiteDatabase database = this.getWritableDatabase();
-        Cursor mCount= database.rawQuery("SELECT biblioteca_id, nombre_cancion, duracion, agregado_por, votos, posicion FROM lista_online order by posicion",null);
+        Cursor mCount= database.rawQuery("SELECT codigo, agregado_por FROM lista_online order by posicion",null);
         return  mCount;
     }
 
     public Cursor getBibliotecaList(){
         SQLiteDatabase database = this.getWritableDatabase();
-        return database.rawQuery("SELECT id, nombre FROM biblioteca order by nombre",null);
+        return database.rawQuery("SELECT codigo, nombre FROM biblioteca order by codigo",null);
     }
 
     public Cursor verificarCodigoAcceso(String codigo) {
@@ -129,9 +128,9 @@ public class DataBaseManager extends SQLiteOpenHelper {
         return db.rawQuery("SELECT id, latitud, longitud FROM SEDES WHERE codigoAcceso = '" + codigo+"'", null);
     }
 
-    public long checkCancionOnPlaylist(String idBiblioteca){
+    public long checkCancionOnPlaylist(String codigo){
         SQLiteDatabase db = this.getWritableDatabase();
-        Cursor mCount= db.rawQuery("SELECT COUNT(*) FROM lista_online WHERE biblioteca_id = '"+idBiblioteca+ "'", null);
+        Cursor mCount= db.rawQuery("SELECT COUNT(*) FROM lista_online WHERE codigo = '"+codigo+ "'", null);
         mCount.moveToFirst();
         long count= mCount.getInt(0);
         mCount.close();
@@ -152,11 +151,3 @@ public class DataBaseManager extends SQLiteOpenHelper {
 
     }
 }
-
- /* public ContentValues generarContentValues(String nombre, String telefono) {
-
-        ContentValues valores = new ContentValues();
-        valores.put(CN_NAME, nombre);
-        valores.put(CN_PHONE, telefono);
-        return valores;
-    }*/

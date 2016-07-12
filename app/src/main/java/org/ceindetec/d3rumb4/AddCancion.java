@@ -59,9 +59,10 @@ public class AddCancion extends DialogFragment implements SearchView.OnQueryText
             }
         });
         builder.setView(vista);
-
         return builder.create();
     }
+
+
 
     @Override
     public boolean onQueryTextChange(String newText) {
@@ -73,5 +74,7 @@ public class AddCancion extends DialogFragment implements SearchView.OnQueryText
     public boolean onQueryTextSubmit(String query) {
         return false;
     }
+
+
 }
 

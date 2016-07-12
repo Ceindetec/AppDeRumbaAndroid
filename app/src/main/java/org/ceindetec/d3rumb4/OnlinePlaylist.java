@@ -20,7 +20,6 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.gson.JsonArray;
@@ -29,21 +28,17 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
-public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQueryTextListener {
+public class OnlinePlaylist extends FragmentActivity
+        implements SearchView.OnQueryTextListener
+
+{
     private BroadcastReceiver mRegistrationBroadcastReceiver;
 
     String token="";
-    //String URL_BASE = "http://192.168.0.17/derumba/";
-    String URL_BASE = "http://192.168.0.21/derumba/";
-    //String URL_BASE = "http://192.168.1.3/derumba/";
+    String URL_BASE = GlobalVars.getGlobalVarsInstance().getUrlBase();
     DataBaseManager manager = new DataBaseManager(this);
     int sede = GlobalVars.getGlobalVarsInstance().getSede();
     String nickname = GlobalVars.getGlobalVarsInstance().getNickname();
@@ -58,6 +53,8 @@ public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQue
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.online_playlist);
+        getOnlinePlayList(sede);
+
         adapter = new CustomArrayAdapter(this,canciones);
         lv = (ListView) findViewById(R.id.play_list);
         search_view = (SearchView) findViewById(R.id.search_online);
@@ -71,17 +68,24 @@ public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQue
         });
 
 
-        /** RECIBE EL MENSAJE DEL SERVIDOR **************************************************************************************/
+        /** RECIBE EL MENSAJE PUSH DEL SERVIDOR **************************************************************************************/
+/** SI EL MENSAJE NO VIENE VACIO, OCURRIO UN CAMBIO EN LA PLAYLIST ONLINE Y SE RE-CONSTRUYE LA LISTA DE REPRODUCCION EN EL MOVIL */
         String mensaje = getIntent().getStringExtra("mensaje");
+        if(mensaje != null){
+                getOnlinePlayList(sede);
+        }
 
-        /**  SI ES LA PRIMERA VEZ, REGISTRA EL DISPOSITIVO EN LA BD DEL SERVIDOR ***********************************************/
-        if(mensaje == null) {
-            mRegistrationBroadcastReceiver = new BroadcastReceiver() {
-
+        /*else{
+            getOnlinePlayList(sede);
+        }*/
+            /**  SI ES LA PRIMERA VEZ, REGISTRA EL DISPOSITIVO EN LA BD DEL SERVIDOR ***********************************************/
+            if(GlobalVars.getGlobalVarsInstance().getEstadoRegistroUsuario() == 0) {
+                mRegistrationBroadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     if (intent.getAction().equals(GCMRegistrationIntentService.REGISTRATION_SUCCESS)) {
                         token = intent.getStringExtra("token");
+                        GlobalVars.getGlobalVarsInstance().setEstadoRegistroUsuario(1);
                         registrarDispositivo(token, nickname, sede);
                     } else if (intent.getAction().equals(GCMRegistrationIntentService.REGISTRATION_ERROR)) {
                         Toast.makeText(getApplicationContext(), "GCM registration error!", Toast.LENGTH_LONG).show();
@@ -89,44 +93,90 @@ public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQue
                         Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
                     }
                 }
-            };
+        };
 
-            //Checking play service is available or not
-            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
+        //Checking play service is available or not
+        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext());
 
-            //if play service is not available
-            if (ConnectionResult.SUCCESS != resultCode) {
-                //If play service is supported but not installed
-                if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                    //Displaying message that play service is not installed
-                    Toast.makeText(getApplicationContext(), "Google Play Service is not install/enabled in this device!", Toast.LENGTH_LONG).show();
-                    GooglePlayServicesUtil.showErrorNotification(resultCode, getApplicationContext());
+        //if play service is not available
+        if (ConnectionResult.SUCCESS != resultCode) {
+            //If play service is supported but not installed
+            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+                //Displaying message that play service is not installed
+                Toast.makeText(getApplicationContext(), "Google Play Service is not install/enabled in this device!", Toast.LENGTH_LONG).show();
+                GooglePlayServicesUtil.showErrorNotification(resultCode, getApplicationContext());
 
-                    //If play service is not supported
-                    //Displaying an error message
-                } else {
-                    Toast.makeText(getApplicationContext(), "This device does not support for Google Play Service!", Toast.LENGTH_LONG).show();
-                }
-
-                //If play service is available
+                //If play service is not supported
+                //Displaying an error message
             } else {
-                //Starting intent to register device
-                Intent itent = new Intent(this, GCMRegistrationIntentService.class);
-                startService(itent);
+                Toast.makeText(getApplicationContext(), "This device does not support for Google Play Service!", Toast.LENGTH_LONG).show();
             }
-        }
-        /** SI EL MENSAJE NO VIENE VACIO, OCURRIO UN CAMBIO EN LA PLAYLIST ONLINE Y SE RE-CONSTRUYE LA LISTA DE REPRODUCCION EN EL MOVIL */
-        else{
-            getOnlinePlayListFile(sede);
+
+            //If play service is available
+        } else {
+            //Starting intent to register device
+            Intent itent = new Intent(this, GCMRegistrationIntentService.class);
+            startService(itent);
         }
     }
+}
+
+    private void getOnlinePlayList(int sede) {
+        String archivoPhp = "get_online_playlist.php";
+        final ProgressDialog loadingb;
+        loadingb = new ProgressDialog(this);
+        loadingb.setMessage("Sincronizando playlist ...");
+        loadingb.show();
+        HashMap<String, String> parameters = new HashMap<>();
+        parameters.put("sede", String.valueOf(sede));
+        GsonRequest jsonObjReq = new GsonRequest( Request.Method.POST, URL_BASE + archivoPhp, JsonObject.class ,parameters,
+
+                new Response.Listener<JsonObject>() {
+                    @Override
+                    public void onResponse(JsonObject response) {
+                        loadingb.dismiss();
+                        try {
+                            manager.limpiarListaOnline();
+                            JsonArray jsonArray = response.getAsJsonArray("playlist");
+                            for (int i = 0; i < jsonArray.size(); i++) {
+                                JsonElement data = jsonArray.get(i);
+                                JsonObject respuesta = data.getAsJsonObject();
+                                String codigo =  respuesta.get("codigo").getAsString();
+                                String agregado_por =  respuesta.get("agregado_por").getAsString();
+                                String posicion =  respuesta.get("posicion").getAsString();
+                                String votos =  respuesta.get("votos").getAsString();
+                                manager.insPlayListOnline(codigo,agregado_por, posicion,votos);
+                            }
+                            buildPlayList();
+                        } catch (JsonIOException e) {
+                            e.printStackTrace();
+                            Log.e("", e.toString());
+                        } catch (JsonParseException e) {
+                            e.printStackTrace();
+                            Log.e("", e.toString());
+                        }
+                    }
+                },
+                //ErrorListener errorListener
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Error", "Error en la obtencion de la play list");
+                    }
+                }
+        );
+        // Añadir petición JSON a la cola
+        SingletonDeRumba.getInstance(this.getApplicationContext()).addToRequestQueue(jsonObjReq);
+    }
+
+
 
     private void buildPlayList(){
         Cursor listaBd = manager.getPlayList();
         canciones = new ArrayList<>();
         if (listaBd.moveToFirst()) {
             do {
-                CancionOnline aux = new CancionOnline("Nombre: " + listaBd.getString(1),"Duracion: "+listaBd.getString(2) ,"Dj: Chuchosex" );
+                CancionOnline aux = new CancionOnline("Nombre: " + listaBd.getString(0),"Duracion: "+listaBd.getString(1) ,"Dj: "+listaBd.getString(1));
                 canciones.add(aux);
             }
             while (listaBd.moveToNext());
@@ -160,9 +210,7 @@ public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQue
                                 JsonElement data = jsonArray.get(0);
                                 JsonObject respuesta = data.getAsJsonObject();
                                 String error =  respuesta.get("error").getAsString();
-                                if(error.equals("false"))
-                                    getOnlinePlayListFile(sede);
-                                else
+                                if(error.equals("true"))
                                     Toast.makeText(getApplicationContext(), respuesta.get("message").toString(),Toast.LENGTH_LONG).show();
 
                         } catch (JsonIOException e) {
@@ -186,52 +234,6 @@ public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQue
         SingletonDeRumba.getInstance(this).addToRequestQueue(jsonObjReq);
         /** ---------------------------------------------------------------------------------------------------------------------*/
     }
-
-    private void getOnlinePlayListFile(final int sede) {
-        String archivoPhp = "get_online_playlist.php";
-        final ProgressDialog loadingb;
-        loadingb = new ProgressDialog(this);
-        loadingb.setMessage("Sincronizando playlist ...");
-        loadingb.show();
-
-        //Llamado al constructor de la clase GsonRequest
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(URL_BASE + archivoPhp, null,
-
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        loadingb.dismiss();
-                        Iterator<?> keys = response.keys();
-                       // ArrayList<String> lista_actual = new ArrayList<>();
-                        try {
-                            while (keys.hasNext()) {
-                                String biblioteca_id = (String) keys.next();
-                                JSONArray jsonArray = response.getJSONArray(biblioteca_id);
-                                JSONObject obj = (JSONObject) jsonArray.get(0);
-                                manager.insPlayListOnline(String.valueOf(sede), biblioteca_id, obj.get("nombre").toString(),
-                                        obj.get("duracion").toString(), obj.get("add_by").toString(), obj.get("votos").toString(),
-                                        obj.get("posicion").toString(), obj.get("add_at").toString());
-                                }
-                                buildPlayList();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                //ErrorListener errorListener
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("", "Error obteniendo datos del servidor !!");
-                    }
-                }
-        );
-
-        // Añadir petición JSON a la cola
-        SingletonDeRumba.getInstance(this.getApplicationContext()).addToRequestQueue(jsonObjReq);
-    }
-
-
 
     //Registering receiver on activity resume
     @Override
@@ -263,4 +265,6 @@ public class OnlinePlaylist extends FragmentActivity implements SearchView.OnQue
     public boolean onQueryTextSubmit(String query) {
         return false;
     }
+
+
 }
